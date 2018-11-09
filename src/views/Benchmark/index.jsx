@@ -1,8 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import CircularIndeterminate from '../../components/CircularIndeterminate';
-import Graphs from '../../components/Graphs';
+import Loadable from 'react-loadable';
 import fetchData from '../../utils/fetchData';
+import { CONFIG } from '../../config';
+import Loading from '../../components/Loading';
+
+const ChartJSWrapper = Loadable({
+  loader: () => import(/* webpackChunkName: 'ChartJSWrapper' */ '../../components/ChartJSWrapper'),
+  loading: Loading,
+});
 
 class Benchmark extends Component {
   static propTypes = {
@@ -43,18 +49,27 @@ class Benchmark extends Component {
   }
 
   render() {
+    // eslint-disable-next-line
     const { benchmark, platform } = this.props;
     const { benchmarkData } = this.state;
+    const benchmarksToCompare = CONFIG.platforms[platform].benchmarks;
 
-    return (Object.keys(benchmarkData).length === 0)
-      ? <CircularIndeterminate />
-      : (
-        <Graphs
-          benchmarkData={benchmarkData}
-          platform={platform}
-          overviewMode={benchmark === 'overview'}
-        />
-      );
+    return (
+      benchmarksToCompare.map(benchmarkKey => (
+        <div>
+          <h2>
+            <a id={benchmarkKey} href={`#${benchmarkKey}`}> # </a>
+            {benchmarkKey}
+          </h2>
+          {benchmarkData.graphs && benchmarkData.graphs[`${benchmarkKey}-overview`] && (
+            <ChartJSWrapper
+              chartJsData={benchmarkData.graphs[`${benchmarkKey}-overview`].chartJsData}
+              chartJsOptions={benchmarkData.graphs[`${benchmarkKey}-overview`].chartJsOptions}
+            />
+          )}
+        </div>
+      ))
+    );
   }
 }
 
